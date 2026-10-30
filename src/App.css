@@ -543,6 +543,48 @@ body, html, #root {
   z-index: 1;
 }
 
+.graph-mount-point {
+  width: 100%;
+  height: 100%;
+  position: absolute;
+  top: 0;
+  left: 0;
+}
+
+/* Error Fallback Screen */
+.error-fallback-screen {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 100vw;
+  height: 100vh;
+  background-color: var(--bg-app);
+}
+
+.error-fallback-card {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  gap: 12px;
+  padding: 32px;
+  background-color: var(--bg-card);
+  border: 1px solid var(--border-strong);
+  border-radius: var(--radius-lg);
+  max-width: 400px;
+}
+
+.error-fallback-title {
+  font-size: 18px;
+  font-weight: 600;
+  color: var(--text-main);
+}
+
+.error-fallback-msg {
+  font-size: 13px;
+  color: var(--text-muted);
+}
+
 .empty-graph-state {
   position: absolute;
   top: 50%;

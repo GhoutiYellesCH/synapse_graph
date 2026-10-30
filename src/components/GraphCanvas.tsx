@@ -41,12 +41,39 @@ export const GraphCanvas: React.FC<GraphCanvasProps> = ({
   onOpenInEditor,
   zoomActionTrigger,
 }) => {
-  const containerRef = useRef<HTMLDivElement>(null);
+  const mountRef = useRef<HTMLDivElement>(null);
   const fgRef = useRef<ForceGraphInstance | null>(null);
 
+  // Keep latest callbacks and props in refs to avoid recreating graph on every render
+  const onSelectNodeRef = useRef(onSelectNode);
+  onSelectNodeRef.current = onSelectNode;
+
+  const onOpenInEditorRef = useRef(onOpenInEditor);
+  onOpenInEditorRef.current = onOpenInEditor;
+
+  const editorSettingsRef = useRef(editorSettings);
+  editorSettingsRef.current = editorSettings;
+
+  const selectedNodeRef = useRef(selectedNode);
+  selectedNodeRef.current = selectedNode;
+
+  const showLabelsRef = useRef(showLabels);
+  showLabelsRef.current = showLabels;
+
+  const orphanFilterRef = useRef(orphanFilter);
+  orphanFilterRef.current = orphanFilter;
+
   const [hoverNode, setHoverNode] = useState<GraphNode | null>(null);
+  const hoverNodeRef = useRef<GraphNode | null>(null);
+  hoverNodeRef.current = hoverNode;
+
   const [highlightNodes, setHighlightNodes] = useState<Set<string>>(new Set());
+  const highlightNodesRef = useRef<Set<string>>(new Set());
+  highlightNodesRef.current = highlightNodes;
+
   const [highlightLinks, setHighlightLinks] = useState<Set<any>>(new Set());
+  const highlightLinksRef = useRef<Set<any>>(new Set());
+  highlightLinksRef.current = highlightLinks;
 
   // Filter nodes & links based on user filters
   const filteredData = useMemo(() => {
@@ -85,12 +112,19 @@ export const GraphCanvas: React.FC<GraphCanvasProps> = ({
 
     const validNodeIds = new Set(validNodes.map((n) => n.id));
 
-    // 2. Filter Links (both source and target must exist in filtered nodes)
-    const validLinks = graphData.links.filter((link) => {
-      const srcId = typeof link.source === 'object' ? link.source.id : link.source;
-      const tgtId = typeof link.target === 'object' ? link.target.id : link.target;
-      return validNodeIds.has(srcId) && validNodeIds.has(tgtId);
-    });
+    // 2. Filter Links (provide clean string references so force-graph can re-link without mutating state)
+    const validLinks = graphData.links
+      .filter((link) => {
+        const srcId = typeof link.source === 'object' ? (link.source as any).id : link.source;
+        const tgtId = typeof link.target === 'object' ? (link.target as any).id : link.target;
+        return validNodeIds.has(srcId) && validNodeIds.has(tgtId);
+      })
+      .map((link) => ({
+        source: typeof link.source === 'object' ? (link.source as any).id : link.source,
+        target: typeof link.target === 'object' ? (link.target as any).id : link.target,
+        label: link.label,
+        is_unresolved: link.is_unresolved,
+      }));
 
     return {
       nodes: validNodes,
@@ -129,19 +163,28 @@ export const GraphCanvas: React.FC<GraphCanvasProps> = ({
     setHighlightLinks(links);
   };
 
-  // Initialize Force Graph instance
+  // Initialize Force Graph instance ONCE on mount
   useEffect(() => {
-    if (!containerRef.current) return;
+    if (!mountRef.current) return;
 
-    const fg = new (ForceGraph as any)()(containerRef.current)
+    let lastClickTime = 0;
+    let lastClickedNode: GraphNode | null = null;
+
+    const fg = new (ForceGraph as any)()(mountRef.current)
       .backgroundColor('#121214')
       .nodeId('id')
       .nodeLabel((n: GraphNode) => `${n.name} (${n.incoming_count} in · ${n.outgoing_count} out)`)
       .nodeCanvasObject((node: GraphNode, ctx: CanvasRenderingContext2D, globalScale: number) => {
-        const isHovered = hoverNode && hoverNode.id === node.id;
-        const isSelected = selectedNode && selectedNode.id === node.id;
-        const isNeighbor = highlightNodes.has(node.id);
-        const hasActiveHover = Boolean(hoverNode);
+        const curHover = hoverNodeRef.current;
+        const curSelected = selectedNodeRef.current;
+        const curHighlights = highlightNodesRef.current;
+        const curOrphanFilter = orphanFilterRef.current;
+        const curShowLabels = showLabelsRef.current;
+
+        const isHovered = curHover && curHover.id === node.id;
+        const isSelected = curSelected && curSelected.id === node.id;
+        const isNeighbor = curHighlights.has(node.id);
+        const hasActiveHover = Boolean(curHover);
 
         // Calculate radius
         const degree = node.incoming_count + node.outgoing_count;
@@ -177,7 +220,7 @@ export const GraphCanvas: React.FC<GraphCanvasProps> = ({
         }
 
         // Draw Outer Glow / Orphan Pulse
-        if (node.is_orphan && (orphanFilter === 'highlight' || orphanFilter === 'only' || isHovered)) {
+        if (node.is_orphan && (curOrphanFilter === 'highlight' || curOrphanFilter === 'only' || isHovered)) {
           ctx.beginPath();
           ctx.arc(x, y, radius + 4, 0, 2 * Math.PI, false);
           ctx.strokeStyle = '#f59e0b';
@@ -208,7 +251,7 @@ export const GraphCanvas: React.FC<GraphCanvasProps> = ({
 
         // Draw Label
         const shouldDrawLabel =
-          showLabels ||
+          curShowLabels ||
           isHovered ||
           isSelected ||
           (globalScale > 1.8 && !hasActiveHover) ||
@@ -254,8 +297,8 @@ export const GraphCanvas: React.FC<GraphCanvasProps> = ({
         ctx.fill();
       })
       .linkCanvasObject((link: any, ctx: CanvasRenderingContext2D, _globalScale: number) => {
-        const isHighlighted = highlightLinks.has(link);
-        const hasActiveHover = Boolean(hoverNode);
+        const isHighlighted = highlightLinksRef.current.has(link);
+        const hasActiveHover = Boolean(hoverNodeRef.current);
 
         const source = link.source;
         const target = link.target;
@@ -286,47 +329,40 @@ export const GraphCanvas: React.FC<GraphCanvasProps> = ({
       })
       .onNodeHover(handleNodeHover)
       .onNodeClick((node: GraphNode) => {
-        onSelectNode(node);
+        const now = Date.now();
+        const settings = editorSettingsRef.current;
+
+        if (lastClickedNode?.id === node.id && now - lastClickTime < 350) {
+          // Double click detected
+          if (settings.doubleClickAction === 'editor') {
+            if (!node.is_ghost && node.path) {
+              onOpenInEditorRef.current(node.path, settings.preferredEditor);
+            }
+          } else {
+            onSelectNodeRef.current(node);
+          }
+        } else {
+          onSelectNodeRef.current(node);
+        }
+        lastClickTime = now;
+        lastClickedNode = node;
       })
       .onNodeRightClick((node: GraphNode) => {
-        // Right click opens in preferred editor directly
         if (!node.is_ghost && node.path) {
-          onOpenInEditor(node.path, editorSettings.preferredEditor);
+          onOpenInEditorRef.current(node.path, editorSettingsRef.current.preferredEditor);
         }
       })
       .onBackgroundClick(() => {
-        onSelectNode(null);
+        onSelectNodeRef.current(null);
       });
-
-    // Detect double click on node canvas
-    let lastClickTime = 0;
-    let lastClickedNode: GraphNode | null = null;
-
-    fg.onNodeClick((node: GraphNode) => {
-      const now = Date.now();
-      if (lastClickedNode?.id === node.id && now - lastClickTime < 350) {
-        // Double click detected!
-        if (editorSettings.doubleClickAction === 'editor') {
-          if (!node.is_ghost && node.path) {
-            onOpenInEditor(node.path, editorSettings.preferredEditor);
-          }
-        } else {
-          onSelectNode(node);
-        }
-      } else {
-        onSelectNode(node);
-      }
-      lastClickTime = now;
-      lastClickedNode = node;
-    });
 
     fgRef.current = fg;
 
     // Handle window resize
     const handleResize = () => {
-      if (containerRef.current && fgRef.current) {
-        const width = containerRef.current.clientWidth;
-        const height = containerRef.current.clientHeight;
+      if (mountRef.current && fgRef.current) {
+        const width = mountRef.current.clientWidth;
+        const height = mountRef.current.clientHeight;
         fgRef.current.width(width);
         fgRef.current.height(height);
       }
@@ -338,34 +374,43 @@ export const GraphCanvas: React.FC<GraphCanvasProps> = ({
     return () => {
       window.removeEventListener('resize', handleResize);
       if (fgRef.current) {
-        fgRef.current._destructor?.();
+        try {
+          fgRef.current._destructor?.();
+        } catch (e) {
+          console.error('Error destroying force-graph:', e);
+        }
       }
     };
   }, []);
 
   // Update Graph Data
+  const hasFittedRef = useRef(false);
   useEffect(() => {
     if (!fgRef.current) return;
     fgRef.current.graphData(filteredData);
+
+    if (filteredData.nodes.length > 0 && !hasFittedRef.current) {
+      hasFittedRef.current = true;
+      setTimeout(() => {
+        fgRef.current?.zoomToFit(400, 60);
+      }, 300);
+    }
   }, [filteredData]);
 
   // Update Physics forces
   useEffect(() => {
     if (!fgRef.current) return;
 
-    // d3-force charge (repulsion)
     const chargeForce = fgRef.current.d3Force('charge');
     if (chargeForce) {
       chargeForce.strength(-chargeStrength);
     }
 
-    // d3-force link distance
     const linkForce = fgRef.current.d3Force('link');
     if (linkForce) {
       linkForce.distance(linkDistance);
     }
 
-    // d3-force center gravity
     const centerForce = fgRef.current.d3Force('center');
     if (centerForce) {
       centerForce.strength(centerStrength);
@@ -399,7 +444,11 @@ export const GraphCanvas: React.FC<GraphCanvasProps> = ({
   }, [zoomActionTrigger]);
 
   return (
-    <div className="graph-canvas-container" ref={containerRef}>
+    <div className="graph-canvas-container">
+      {/* Dedicated leaf container for ForceGraph canvas DOM — React never touches its children */}
+      <div className="graph-mount-point" ref={mountRef} />
+
+      {/* React-managed UI overlay rendered as a sibling, not inside the mountRef */}
       {filteredData.nodes.length === 0 && (
         <div className="empty-graph-state">
           {graphData ? (
