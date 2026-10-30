@@ -1,8 +1,8 @@
 {
   "$schema": "https://schema.tauri.app/config/2",
-  "productName": "Obsidian Graph Viewer",
-  "version": "0.1.0",
-  "identifier": "com.obsidiangraph.viewer",
+  "productName": "Synapse Graph",
+  "version": "1.0.0",
+  "identifier": "com.ghoutiyelles.synapsegraph",
   "build": {
     "beforeDevCommand": "npm run dev",
     "devUrl": "http://localhost:1420",
@@ -12,7 +12,7 @@
   "app": {
     "windows": [
       {
-        "title": "Obsidian Graph Viewer",
+        "title": "Synapse Graph - Knowledge Visualizer",
         "width": 1280,
         "height": 800,
         "minWidth": 800,
@@ -32,6 +32,20 @@
       "icons/128x128@2x.png",
       "icons/icon.icns",
       "icons/icon.ico"
-    ]
+    ],
+    "shortDescription": "Standalone Markdown Knowledge Graph Viewer",
+    "longDescription": "Synapse Graph is a high-performance standalone graph viewer for Markdown knowledge vaults created by Ghouti Yelles Chaouche. Designed for rapid note exploration, orphan note auditing, and direct external editor integration.",
+    "publisher": "Ghouti Yelles Chaouche",
+    "category": "Utility",
+    "linux": {
+      "deb": {
+        "depends": [
+          "libwebkit2gtk-4.1-0 | libwebkit2gtk-4.0-37",
+          "libgtk-3-0"
+        ],
+        "section": "utils",
+        "priority": "optional"
+      }
+    }
   }
 }

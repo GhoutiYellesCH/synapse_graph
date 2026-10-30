@@ -12,6 +12,8 @@ dist
 dist-ssr
 *.local
 src-tauri/target
+release/
+*.deb
 
 # Editor directories and files
 .vscode/*

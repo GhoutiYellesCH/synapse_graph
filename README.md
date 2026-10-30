@@ -1,84 +1,114 @@
-# Obsidian Graph Viewer (Desktop Tauri App)
+# Synapse Graph
 
-A standalone, high-performance graph viewer for Obsidian vaults built with **Tauri v2**, **Rust**, **React**, and **force-graph**.
+A standalone, high-performance Markdown knowledge graph visualizer and orphan note auditor built with **Tauri v2**, **Rust**, and **React**.
 
-Designed specifically for users who want to visualize their entire Obsidian knowledge graph, explore connections, and **audit unconnected/orphan notes**—without a heavy embedded text editor. When you need to write or edit, notes open instantly in your favorite external editor: **Neovim**, **Emacs**, **VS Code**, or your custom terminal command.
-
----
-
-## 🌟 Key Features
-
-1. **Vault Scanner & Link Resolver (Rust Engine)**:
-   - Blazing-fast recursive vault traversal (~0.02s for hundreds of notes).
-   - Resolves both Obsidian `[[wikilinks]]` (including `[[Note|Alias]]` and `[[Note#Section]]`) and standard markdown `[text](target.md)` links.
-   - Extracts YAML frontmatter tags (`tags: [...]`) and inline `#tags`.
-   - Resolves links across subfolders using Obsidian's shortest-path resolution.
-
-2. **Orphan & Unconnected Notes Focus**:
-   - Specifically highlights notes with degree 0 (0 incoming backlinks and 0 outgoing links) so you can view leftover ideas.
-   - **One-click filters**:
-     - **All Notes**: Standard full graph view.
-     - **Highlight Orphans**: Pulses and glows all unconnected notes with bright amber rings.
-     - **Orphans Only**: Isolates and displays only unconnected notes to audit backlog.
-     - **Hide Orphans**: Focuses strictly on connected clusters.
-
-3. **External Editor Integration**:
-   - **Neovim**: Opens the note inside Kitty, Xterm, Alacritty, or Gnome Terminal (`kitty -e nvim <file>`).
-   - **VS Code**: Opens the note via `code --reuse-window <file>`.
-   - **Emacs**: Connects via `emacsclient -n <file>` or `emacs <file>`.
-   - **Custom Command**: Configure custom terminal strings with `{file}` and `{vault}` placeholders (e.g. `kitty -e nvim "{file}"` or `alacritty -e nvim +1 "{file}"`).
-   - **Double-Click Action**: Double clicking any node in the graph immediately opens the note in your preferred editor.
-   - **Open Vault in Editor**: Quick button to open the whole vault workspace in your editor.
-
-4. **Obsidian Dark Aesthetic & Physics Controls**:
-   - Obsidian-inspired dark glassmorphism UI (`#121214` space dark).
-   - Node radius dynamically scales with connectivity degree.
-   - Neighbor highlighting on hover: cursor focus dims unrelated nodes and illuminates 1st-degree neighbors and connecting edges.
-   - Real-time search filter (matches note titles, paths, excerpts, or tags).
-   - Folder and Tag multi-filtering.
-   - Force physics sliders: Node Repulsion, Link Distance, and Center Gravity.
-   - Pan, Zoom In/Out, Fit-to-screen, and Pause/Resume simulation.
-
-5. **Read-Only Inspector Panel**:
-   - Slide-out inspector on node selection.
-   - View file metadata (file size, modified timestamp, relative path).
-   - Inbound Backlinks & Outgoing links list (clickable chips to navigate the network).
-   - Read-only note preview with formatted text.
-   - Quick launcher buttons for Neovim, VS Code, Emacs, Default system app, and File Manager reveal.
+Created and developed by **Ghouti Yelles Chaouche**.
 
 ---
 
-## 🚀 Running & Developing
+## 🌟 Overview & Key Capabilities
 
-### Development Mode (with hot-reload):
+- **Zero-Copyright Clean-Room Design**: An independent, trademark-free graph visualizer built from scratch without embedded text editors.
+- **External Editor Workflow**: Instantly jump into **Neovim**, **Emacs**, **VS Code**, or a custom terminal command on double-click or right-click.
+- **Auditing Leftover & Orphan Notes**: Dedicated 1-click filter modes (*Highlight Orphans*, *Orphans Only*, *Hide Orphans*) with glowing amber pulses.
+- **Obsidian-Grade Calibrated Physics**:
+  - Bounded repulsion (`distanceMax = 350`) so large vaults (~1,000+ notes) stay tightly grouped rather than blowing apart.
+  - Collision physics (`d3.forceCollide`) prevents node overlaps.
+  - Sliders for Center Force, Repel Force, Link Distance, and Link Force.
+- **Obsidian Graph Features**:
+  - Directional link arrows
+  - Color groups with query syntax (`tag:#work`, `path:projects`, or text search)
+  - Full-text search and folder/tag filtering
+  - Node size and link thickness scaling
+- **Blurred Background Image**: Custom image background with blur slider (`0-50px`) and darkness overlay for canvas and/or inspector.
+- **Interactive Knowledge Dashboard & Docs**: Built-in dashboard with real-time vault analytics (density, average degree, hub rank), CLI instructions, and modding guides.
+- **Live CSS Snippet System**: Dedicated `~/.config/synapse-graph/snippets/` folder for toggleable `.css` snippet files.
+- **Plugin Architecture**: Extensible JavaScript mod engine with scripts stored in `~/.config/synapse-graph/plugins/`.
+
+---
+
+## 📁 System Configuration & Storage Hierarchy
+
+All application state, user mods, and per-vault preferences live in standard Linux XDG config directories:
+
+```
+~/.config/synapse-graph/
+├── vault_data/          # Per-vault remembered configurations (<vault_hash>.json)
+│   ├── Documents_Notes_a1b2.json
+│   └── My_Vault_c3d4.json
+├── plugins/             # User JavaScript plugins and mods (*.js)
+│   └── vault-node-badge.js
+└── snippets/            # Custom CSS snippet files (*.css)
+    ├── accent-glow.css
+    └── custom-theme.css
+```
+
+### Automatic Per-Vault Persistence
+Whenever you adjust color groups, physics forces, display settings, or background images for a specific vault, Synapse Graph automatically remembers and saves those settings in `~/.config/synapse-graph/vault_data/`. When you reopen that vault later via CLI or GUI, your customized layout is automatically restored!
+
+---
+
+## 📦 Ubuntu / Debian Installation (.deb Package)
+
+Pre-packaged Debian/Ubuntu `.deb` binaries can be downloaded directly from the [GitHub Releases](https://github.com/GhoutiYellesCH/synapse-graph/releases) page:
+
 ```bash
+# Install downloaded package:
+sudo dpkg -i synapse-graph_1.0.0_amd64.deb
+
+# If any dependencies are needed:
+sudo apt-get install -f
+```
+
+This registers:
+- `/usr/bin/synapse-graph` in your system `$PATH`
+- `Synapse Graph` in your desktop applications launcher
+- App icon in `/usr/share/icons/hicolor/`
+
+---
+
+## ⚡ Native Command-Line (CLI) Usage
+
+Launch any folder as a Markdown vault directly from your shell:
+
+```bash
+# Open any folder as a vault
+synapse-graph ~/Documents/MyNotes
+
+# Open current directory as vault
+synapse-graph .
+
+# Using the -v / --vault flag
+synapse-graph -v ~/Work/KnowledgeBase
+
+# Display CLI help
+synapse-graph --help
+```
+
+You can also run the local standalone executable directly without installing:
+```bash
+./synapse-graph ~/sample_vault
+```
+
+---
+
+## 🛠️ Building From Source
+
+```bash
+# 1. Install dependencies
+npm install
+
+# 2. Run in development mode (with hot-reload)
 npm run tauri dev
-```
 
-### Pre-built Native Binary:
-A built binary is ready at:
-```bash
-./src-tauri/target/debug/tauri-app
-```
-
-### Build Debian Package:
-```bash
-npm run tauri build -- --debug
-# The .deb package will be created in src-tauri/target/debug/bundle/deb/
+# 3. Build standalone binary and .deb package
+npm run tauri build
 ```
 
 ---
 
-## 📁 Included Sample Vault
+## 👤 Author & License
 
-A sample vault with interconnected notes and 5 unconnected orphan notes is available in `./sample_vault`:
-- `sample_vault/Index.md`
-- `sample_vault/Architecture.md`
-- `sample_vault/Rust Backend.md`
-- `sample_vault/Frontend UI.md`
-- `sample_vault/Orphan Ideas.md` *(Orphan note)*
-- `sample_vault/Random Thought - 2026.md` *(Orphan note)*
-- `sample_vault/Leftover Bookmark.md` *(Orphan note)*
-- `sample_vault/Draft Post.md` *(Orphan note)*
-- `sample_vault/Research/Unconnected Paper.md` *(Orphan note)*
-- `sample_vault/Research/Graph Theory.md`
+- **Developer**: Ghouti Yelles Chaouche
+- **Application**: Synapse Graph
+- **License**: MIT

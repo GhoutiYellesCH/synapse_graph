@@ -15,13 +15,15 @@ import {
   Hash,
   Eye,
 } from 'lucide-react';
-import { EditorSettings, EditorType, GraphData, GraphNode } from '../types';
+import { BackgroundSettings, EditorSettings, EditorType, GraphData, GraphNode } from '../types';
 import { readNoteContent } from '../services/api';
+import { pluginRegistry } from '../plugins/PluginManager';
 
 interface InspectorProps {
   node: GraphNode | null;
   graphData: GraphData | null;
   editorSettings: EditorSettings;
+  backgroundSettings?: BackgroundSettings;
   vaultPath: string;
   onClose: () => void;
   onSelectNode: (node: GraphNode) => void;
@@ -33,6 +35,7 @@ export const Inspector: React.FC<InspectorProps> = ({
   node,
   graphData,
   editorSettings,
+  backgroundSettings,
   vaultPath: _vaultPath,
   onClose,
   onSelectNode,
@@ -134,7 +137,25 @@ export const Inspector: React.FC<InspectorProps> = ({
   };
 
   return (
-    <aside className="inspector-panel">
+    <aside
+      className={`inspector-panel ${
+        backgroundSettings?.enabled && backgroundSettings?.applyToInspector
+          ? 'glass-background'
+          : ''
+      }`}
+      style={
+        backgroundSettings?.enabled &&
+        backgroundSettings?.applyToInspector &&
+        backgroundSettings?.imageUrl
+          ? {
+              backgroundImage: `linear-gradient(rgba(24, 24, 27, ${backgroundSettings.opacity}), rgba(24, 24, 27, ${backgroundSettings.opacity})), url(${backgroundSettings.imageUrl})`,
+              backgroundSize: 'cover',
+              backgroundPosition: 'center',
+              backdropFilter: `blur(${backgroundSettings.blur}px)`,
+            }
+          : undefined
+      }
+    >
       {/* Header */}
       <div className="inspector-header">
         <div className="inspector-title-wrap">
@@ -347,6 +368,18 @@ export const Inspector: React.FC<InspectorProps> = ({
           </ul>
         )}
       </div>
+
+      {/* Plugin Contributed Panels */}
+      {pluginRegistry.getInspectorPanels().map((panel) => {
+        const rendered = panel.render(node, graphData);
+        if (!rendered) return null;
+        return (
+          <div key={panel.id} className="inspector-section plugin-section">
+            <label className="section-title">{panel.title}</label>
+            <div className="plugin-panel-body">{rendered}</div>
+          </div>
+        );
+      })}
 
       {/* Read-Only Note Preview */}
       {!node.is_ghost && (

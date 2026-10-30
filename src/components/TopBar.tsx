@@ -7,35 +7,30 @@ import {
   ExternalLink,
   Code,
   FileText,
-  Unlink,
   Layers,
 } from 'lucide-react';
-import { EditorSettings, GraphData } from '../types';
+import { EditorSettings } from '../types';
 
 interface TopBarProps {
   vaultPath: string | null;
-  graphData: GraphData | null;
   isLoading: boolean;
-  orphanFilter: 'all' | 'highlight' | 'only' | 'hide';
-  setOrphanFilter: (filter: 'all' | 'highlight' | 'only' | 'hide') => void;
   editorSettings: EditorSettings;
   onOpenVaultDialog: () => void;
   onRefreshVault: () => void;
   onOpenVaultInEditor: () => void;
   onOpenSettings: () => void;
+  onOpenDashboard: () => void;
 }
 
 export const TopBar: React.FC<TopBarProps> = ({
   vaultPath,
-  graphData,
   isLoading,
-  orphanFilter,
-  setOrphanFilter,
   editorSettings,
   onOpenVaultDialog,
   onRefreshVault,
   onOpenVaultInEditor,
   onOpenSettings,
+  onOpenDashboard,
 }) => {
   const vaultName = vaultPath ? vaultPath.split('/').filter(Boolean).pop() || vaultPath : null;
 
@@ -70,9 +65,9 @@ export const TopBar: React.FC<TopBarProps> = ({
   return (
     <header className="topbar">
       <div className="topbar-left">
-        <div className="app-brand">
+        <div className="app-brand" onClick={onOpenDashboard} style={{ cursor: 'pointer' }} title="Open Synapse Dashboard & Docs">
           <Layers className="brand-icon" />
-          <span className="brand-title">Obsidian Graph</span>
+          <span className="brand-title">Synapse Graph</span>
         </div>
 
         <button
@@ -98,42 +93,6 @@ export const TopBar: React.FC<TopBarProps> = ({
         )}
       </div>
 
-      <div className="topbar-center">
-        {graphData && (
-          <div className="stats-cluster">
-            <div className="stat-pill">
-              <span className="stat-num">{graphData.total_files}</span>
-              <span className="stat-label">Notes</span>
-            </div>
-            <div className="stat-pill">
-              <span className="stat-num">{graphData.link_count}</span>
-              <span className="stat-label">Links</span>
-            </div>
-            <button
-              className={`stat-pill stat-orphan ${
-                orphanFilter === 'only'
-                  ? 'is-active-filter'
-                  : orphanFilter === 'highlight'
-                  ? 'is-highlighting'
-                  : ''
-              }`}
-              onClick={() => {
-                if (orphanFilter === 'all') setOrphanFilter('only');
-                else if (orphanFilter === 'only') setOrphanFilter('highlight');
-                else setOrphanFilter('all');
-              }}
-              title="Click to toggle Orphan filter: Show only unconnected notes"
-            >
-              <Unlink className="w-3.5 h-3.5" />
-              <span className="stat-num">{graphData.orphan_count}</span>
-              <span className="stat-label">
-                {orphanFilter === 'only' ? 'Orphans (Filtered)' : 'Orphans'}
-              </span>
-            </button>
-          </div>
-        )}
-      </div>
-
       <div className="topbar-right">
         {vaultPath && (
           <button
@@ -149,7 +108,7 @@ export const TopBar: React.FC<TopBarProps> = ({
         <button
           className="btn btn-icon"
           onClick={onOpenSettings}
-          title="Editor & App Settings"
+          title="Settings & Dashboard"
         >
           <Settings className="w-4 h-4" />
         </button>
