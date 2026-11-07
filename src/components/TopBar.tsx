@@ -8,6 +8,7 @@ import {
   Code,
   FileText,
   Layers,
+  Brain,
 } from 'lucide-react';
 import { EditorSettings } from '../types';
 
@@ -36,6 +37,8 @@ export const TopBar: React.FC<TopBarProps> = ({
 
   const getEditorIcon = () => {
     switch (editorSettings.preferredEditor) {
+      case 'second-brain':
+        return <Brain className="w-4 h-4 text-purple-400" />;
       case 'nvim':
         return <Terminal className="w-4 h-4 text-emerald-400" />;
       case 'code':
@@ -49,6 +52,8 @@ export const TopBar: React.FC<TopBarProps> = ({
 
   const getEditorLabel = () => {
     switch (editorSettings.preferredEditor) {
+      case 'second-brain':
+        return 'Second Brain';
       case 'nvim':
         return 'Neovim';
       case 'code':

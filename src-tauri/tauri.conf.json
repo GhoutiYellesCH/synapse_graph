@@ -1,7 +1,7 @@
 {
   "$schema": "https://schema.tauri.app/config/2",
   "productName": "Synapse Graph",
-  "version": "1.0.1",
+  "version": "1.0.2",
   "identifier": "com.ghoutiyelles.synapsegraph",
   "build": {
     "beforeDevCommand": "npm run dev",

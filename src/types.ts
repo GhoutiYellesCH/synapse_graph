@@ -48,6 +48,7 @@ export interface ScanOptions {
 }
 
 export interface AvailableEditors {
+  second_brain: boolean;
   nvim: boolean;
   code: boolean;
   emacs: boolean;
@@ -56,7 +57,7 @@ export interface AvailableEditors {
   xdg_open: boolean;
 }
 
-export type EditorType = 'nvim' | 'code' | 'emacs' | 'system' | 'custom';
+export type EditorType = 'second-brain' | 'nvim' | 'code' | 'emacs' | 'system' | 'custom';
 
 export interface EditorSettings {
   preferredEditor: EditorType;

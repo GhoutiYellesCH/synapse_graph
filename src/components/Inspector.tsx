@@ -14,6 +14,7 @@ import {
   HardDrive,
   Hash,
   Eye,
+  Brain,
 } from 'lucide-react';
 import { BackgroundSettings, EditorSettings, EditorType, GraphData, GraphNode } from '../types';
 import { readNoteContent } from '../services/api';
@@ -110,6 +111,8 @@ export const Inspector: React.FC<InspectorProps> = ({
 
   const getPrimaryEditorLabel = () => {
     switch (editorSettings.preferredEditor) {
+      case 'second-brain':
+        return 'Second Brain';
       case 'nvim':
         return 'Neovim';
       case 'code':
@@ -125,6 +128,8 @@ export const Inspector: React.FC<InspectorProps> = ({
 
   const getPrimaryEditorIcon = () => {
     switch (editorSettings.preferredEditor) {
+      case 'second-brain':
+        return <Brain className="w-4 h-4 text-purple-400" />;
       case 'nvim':
         return <Terminal className="w-4 h-4 text-emerald-400" />;
       case 'code':
@@ -210,6 +215,17 @@ export const Inspector: React.FC<InspectorProps> = ({
 
           {/* Secondary Editor Switchers */}
           <div className="secondary-editor-grid">
+            {editorSettings.preferredEditor !== 'second-brain' && (
+              <button
+                className="btn btn-secondary-editor"
+                onClick={() => onOpenInEditor(node.path, 'second-brain')}
+                title="Open in Second Brain"
+              >
+                <Brain className="w-3.5 h-3.5 text-purple-400" />
+                <span>Second Brain</span>
+              </button>
+            )}
+
             {editorSettings.preferredEditor !== 'nvim' && (
               <button
                 className="btn btn-secondary-editor"

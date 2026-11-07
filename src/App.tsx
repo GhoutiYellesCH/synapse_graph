@@ -36,8 +36,8 @@ import { registerBuiltinPlugins } from './plugins/builtinPlugins';
 import './App.css';
 
 const DEFAULT_EDITOR_SETTINGS: EditorSettings = {
-  preferredEditor: 'nvim',
-  customCommand: 'kitty -e nvim "{file}"',
+  preferredEditor: 'second-brain',
+  customCommand: 'second-brain "{vault}" "{file}"',
   doubleClickAction: 'editor',
 };
 
@@ -153,7 +153,13 @@ export const App: React.FC = () => {
   const [editorSettings, setEditorSettings] = useState<EditorSettings>(() => {
     try {
       const saved = localStorage.getItem('synapse_editor_settings') || localStorage.getItem('obsidian_editor_settings');
-      if (saved) return JSON.parse(saved);
+      if (saved) {
+        const parsed = JSON.parse(saved);
+        if (!localStorage.getItem('synapse_preferred_user_set')) {
+          parsed.preferredEditor = 'second-brain';
+        }
+        return { ...DEFAULT_EDITOR_SETTINGS, ...parsed };
+      }
     } catch (e) {
       console.error(e);
     }

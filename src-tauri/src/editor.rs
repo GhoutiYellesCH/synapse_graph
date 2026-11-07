@@ -3,6 +3,7 @@ use std::process::Command;
 
 #[derive(Debug, serde::Serialize, serde::Deserialize)]
 pub struct AvailableEditors {
+    pub second_brain: bool,
     pub nvim: bool,
     pub code: bool,
     pub emacs: bool,
@@ -12,7 +13,12 @@ pub struct AvailableEditors {
 }
 
 pub fn check_available_editors() -> AvailableEditors {
+    let home = std::env::var("HOME").unwrap_or_default();
+    let local_sb = format!("{}/.local/bin/second-brain", home);
+    let second_brain = which_check("second-brain") || Path::new(&local_sb).exists();
+
     AvailableEditors {
+        second_brain,
         nvim: which_check("nvim"),
         code: which_check("code"),
         emacs: which_check("emacs") || which_check("emacsclient"),
@@ -42,6 +48,23 @@ pub fn open_note(
     }
 
     match editor {
+        "second-brain" | "secondbrain" => {
+            let home = std::env::var("HOME").unwrap_or_default();
+            let local_sb = format!("{}/.local/bin/second-brain", home);
+            let bin = if which_check("second-brain") {
+                "second-brain".to_string()
+            } else if Path::new(&local_sb).exists() {
+                local_sb
+            } else {
+                "second-brain".to_string()
+            };
+
+            Command::new(&bin)
+                .args([vault_path, file_path])
+                .spawn()
+                .map_err(|e| format!("Failed to launch Second Brain ('{}'): {}", bin, e))?;
+            Ok(())
+        }
         "nvim" | "neovim" => {
             // Check terminal emulator preference: kitty > alacritty > xterm > gnome-terminal
             if which_check("kitty") {
