@@ -111,8 +111,9 @@ export const Inspector: React.FC<InspectorProps> = ({
 
   const getPrimaryEditorLabel = () => {
     switch (editorSettings.preferredEditor) {
+      case 'synapse':
       case 'second-brain':
-        return 'Second Brain';
+        return 'Synapse';
       case 'nvim':
         return 'Neovim';
       case 'code':
@@ -128,6 +129,7 @@ export const Inspector: React.FC<InspectorProps> = ({
 
   const getPrimaryEditorIcon = () => {
     switch (editorSettings.preferredEditor) {
+      case 'synapse':
       case 'second-brain':
         return <Brain className="w-4 h-4 text-purple-400" />;
       case 'nvim':
@@ -215,14 +217,14 @@ export const Inspector: React.FC<InspectorProps> = ({
 
           {/* Secondary Editor Switchers */}
           <div className="secondary-editor-grid">
-            {editorSettings.preferredEditor !== 'second-brain' && (
+            {editorSettings.preferredEditor !== 'synapse' && editorSettings.preferredEditor !== 'second-brain' && (
               <button
                 className="btn btn-secondary-editor"
-                onClick={() => onOpenInEditor(node.path, 'second-brain')}
-                title="Open in Second Brain"
+                onClick={() => onOpenInEditor(node.path, 'synapse')}
+                title="Open in Synapse"
               >
                 <Brain className="w-3.5 h-3.5 text-purple-400" />
-                <span>Second Brain</span>
+                <span>Synapse</span>
               </button>
             )}
 

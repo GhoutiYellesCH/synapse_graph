@@ -37,6 +37,7 @@ export const TopBar: React.FC<TopBarProps> = ({
 
   const getEditorIcon = () => {
     switch (editorSettings.preferredEditor) {
+      case 'synapse':
       case 'second-brain':
         return <Brain className="w-4 h-4 text-purple-400" />;
       case 'nvim':
@@ -52,8 +53,9 @@ export const TopBar: React.FC<TopBarProps> = ({
 
   const getEditorLabel = () => {
     switch (editorSettings.preferredEditor) {
+      case 'synapse':
       case 'second-brain':
-        return 'Second Brain';
+        return 'Synapse';
       case 'nvim':
         return 'Neovim';
       case 'code':

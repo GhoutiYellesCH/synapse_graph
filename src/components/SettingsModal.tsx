@@ -243,8 +243,8 @@ context.registerInspectorPanel({
                 <label className="section-label">Detected Tools on System</label>
                 <div className="tools-status-grid">
                   <div className="tool-status-item">
-                    <span className="tool-name font-semibold text-purple-300">Second Brain (second-brain)</span>
-                    {available?.second_brain ? (
+                    <span className="tool-name font-semibold text-purple-300">Synapse (synapse)</span>
+                    {available?.synapse || available?.second_brain ? (
                       <span className="status-badge status-ok">
                         <CheckCircle2 className="w-3.5 h-3.5 text-purple-400" />
                         <span>Ready & Default</span>
@@ -319,20 +319,20 @@ context.registerInspectorPanel({
               <div className="settings-section">
                 <label className="section-label">Preferred External Editor</label>
                 <div className="radio-grid">
-                  <label className={`radio-card ${localSettings.preferredEditor === 'second-brain' ? 'selected' : ''}`}>
+                  <label className={`radio-card ${localSettings.preferredEditor === 'synapse' || localSettings.preferredEditor === 'second-brain' ? 'selected' : ''}`}>
                     <input
                       type="radio"
                       name="editor"
-                      value="second-brain"
-                      checked={localSettings.preferredEditor === 'second-brain'}
-                      onChange={() => setLocalSettings({ ...localSettings, preferredEditor: 'second-brain' })}
+                      value="synapse"
+                      checked={localSettings.preferredEditor === 'synapse' || localSettings.preferredEditor === 'second-brain'}
+                      onChange={() => setLocalSettings({ ...localSettings, preferredEditor: 'synapse' })}
                     />
                     <div className="radio-card-content">
                       <div className="radio-card-title">
                         <Brain className="w-4 h-4 text-purple-400" />
-                        <span className="text-purple-300 font-semibold">Second Brain (Default)</span>
+                        <span className="text-purple-300 font-semibold">Synapse (Default)</span>
                       </div>
-                      <p className="radio-card-desc">Opens note in Second Brain with Obsidian-grade Live Preview & assets</p>
+                      <p className="radio-card-desc">Opens note in Synapse with Tokyo Night theme, Live Preview & Code Editor</p>
                     </div>
                   </label>
 

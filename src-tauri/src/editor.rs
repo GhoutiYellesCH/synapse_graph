@@ -3,6 +3,7 @@ use std::process::Command;
 
 #[derive(Debug, serde::Serialize, serde::Deserialize)]
 pub struct AvailableEditors {
+    pub synapse: bool,
     pub second_brain: bool,
     pub nvim: bool,
     pub code: bool,
@@ -14,10 +15,14 @@ pub struct AvailableEditors {
 
 pub fn check_available_editors() -> AvailableEditors {
     let home = std::env::var("HOME").unwrap_or_default();
+    let local_synapse = format!("{}/.local/bin/synapse", home);
+    let synapse = which_check("synapse") || Path::new(&local_synapse).exists();
+
     let local_sb = format!("{}/.local/bin/second-brain", home);
     let second_brain = which_check("second-brain") || Path::new(&local_sb).exists();
 
     AvailableEditors {
+        synapse,
         second_brain,
         nvim: which_check("nvim"),
         code: which_check("code"),
@@ -48,21 +53,27 @@ pub fn open_note(
     }
 
     match editor {
-        "second-brain" | "secondbrain" => {
+        "synapse" | "synapse-md" | "second-brain" | "secondbrain" => {
             let home = std::env::var("HOME").unwrap_or_default();
+            let local_synapse = format!("{}/.local/bin/synapse", home);
             let local_sb = format!("{}/.local/bin/second-brain", home);
-            let bin = if which_check("second-brain") {
+
+            let bin = if which_check("synapse") {
+                "synapse".to_string()
+            } else if Path::new(&local_synapse).exists() {
+                local_synapse
+            } else if which_check("second-brain") {
                 "second-brain".to_string()
             } else if Path::new(&local_sb).exists() {
                 local_sb
             } else {
-                "second-brain".to_string()
+                "synapse".to_string()
             };
 
             Command::new(&bin)
                 .args([vault_path, file_path])
                 .spawn()
-                .map_err(|e| format!("Failed to launch Second Brain ('{}'): {}", bin, e))?;
+                .map_err(|e| format!("Failed to launch Synapse ('{}'): {}", bin, e))?;
             Ok(())
         }
         "nvim" | "neovim" => {

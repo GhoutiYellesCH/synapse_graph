@@ -36,8 +36,8 @@ import { registerBuiltinPlugins } from './plugins/builtinPlugins';
 import './App.css';
 
 const DEFAULT_EDITOR_SETTINGS: EditorSettings = {
-  preferredEditor: 'second-brain',
-  customCommand: 'second-brain "{vault}" "{file}"',
+  preferredEditor: 'synapse',
+  customCommand: 'synapse "{vault}" "{file}"',
   doubleClickAction: 'editor',
 };
 
@@ -155,8 +155,8 @@ export const App: React.FC = () => {
       const saved = localStorage.getItem('synapse_editor_settings') || localStorage.getItem('obsidian_editor_settings');
       if (saved) {
         const parsed = JSON.parse(saved);
-        if (!localStorage.getItem('synapse_preferred_user_set')) {
-          parsed.preferredEditor = 'second-brain';
+        if (parsed.preferredEditor === 'second-brain' || !localStorage.getItem('synapse_preferred_user_set')) {
+          parsed.preferredEditor = 'synapse';
         }
         return { ...DEFAULT_EDITOR_SETTINGS, ...parsed };
       }
